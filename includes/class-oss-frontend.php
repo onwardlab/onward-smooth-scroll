@@ -43,7 +43,7 @@ class Frontend {
 
 		$in_footer = ( 'footer' === $options['script_location'] );
 
-		// Base stylesheet (very light footprint).
+		// Base stylesheet (light footprint).
 		wp_enqueue_style(
 			'oss-frontend',
 			OSS_PLUGIN_URL . 'assets/css/oss-frontend.css',
@@ -52,8 +52,8 @@ class Frontend {
 		);
 
 		// Determine library asset paths.
-		$lib_js   = $this->map_library_to_js( $active_library );
-		$lib_css  = $this->map_library_to_css( $active_library );
+		$lib_js  = $this->map_library_to_js( $active_library );
+		$lib_css = $this->map_library_to_css( $active_library );
 
 		// Register library CSS if present.
 		if ( $lib_css && file_exists( OSS_PLUGIN_DIR . $lib_css ) ) {
@@ -65,32 +65,37 @@ class Frontend {
 			);
 		}
 
-		// Register and enqueue the library wrapper script.
-		wp_register_script(
-			'oss-library',
-			OSS_PLUGIN_URL . $lib_js,
-			array(),
-			OSS_VERSION,
-			$in_footer
-		);
-		wp_enqueue_script( 'oss-library' );
+		// Register and enqueue the library wrapper script if it exists.
+		if ( file_exists( OSS_PLUGIN_DIR . $lib_js ) ) {
+			wp_register_script(
+				'oss-library',
+				OSS_PLUGIN_URL . $lib_js,
+				array(),
+				OSS_VERSION,
+				$in_footer
+			);
+			wp_enqueue_script( 'oss-library' );
+		}
 
 		// Orchestrator initializer.
 		wp_register_script(
 			'oss-init',
 			OSS_PLUGIN_URL . 'assets/js/oss-init.js',
-			array( 'oss-library' ),
+			array(),
 			OSS_VERSION,
 			$in_footer
 		);
 
 		$localized = array(
 			'activeLibrary' => $active_library,
-			'speed'         => (float) $options['scroll_speed'],
-			'easing'        => (string) $options['easing'],
-			'anchorOffset'  => (int) $options['anchor_offset'],
-			'enableMobile'  => (int) $options['enable_mobile'] ? true : false,
-			'isMobile'      => wp_is_mobile(),
+			'general'       => array(
+				'anchorOffset' => (int) $options['anchor_offset'],
+				'enableMobile' => (int) $options['enable_mobile'] ? true : false,
+				'isMobile'     => wp_is_mobile(),
+			),
+			'locomotive'    => isset( $options['locomotive'] ) && is_array( $options['locomotive'] ) ? $options['locomotive'] : array(),
+			'lenis'         => isset( $options['lenis'] ) && is_array( $options['lenis'] ) ? $options['lenis'] : array(),
+			'gsap'          => isset( $options['gsap'] ) && is_array( $options['gsap'] ) ? $options['gsap'] : array(),
 			'pluginUrl'     => rtrim( OSS_PLUGIN_URL, '/' ),
 			'pluginVersion' => OSS_VERSION,
 		);
@@ -127,11 +132,10 @@ class Frontend {
 				return 'libraries/locomotive.js';
 			case 'lenis':
 				return 'libraries/lenis.js';
-			case 'scrollbar':
-				return 'libraries/scrollbar.js';
-			case 'native':
+			case 'gsap':
+				return 'libraries/gsap.js';
 			default:
-				return 'libraries/native.js';
+				return 'libraries/lenis.js';
 		}
 	}
 
@@ -147,9 +151,8 @@ class Frontend {
 				return 'libraries/locomotive.css';
 			case 'lenis':
 				return 'libraries/lenis.css';
-			case 'scrollbar':
-				return 'libraries/scrollbar.css';
-			case 'native':
+			case 'gsap':
+				return 'libraries/gsap.css';
 			default:
 				return null;
 		}
