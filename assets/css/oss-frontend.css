@@ -1,0 +1,10 @@
+/* Onward Smooth Scrolling - Frontend styles */
+
+html.oss-native-smooth {
+	scroll-behavior: smooth;
+}
+
+/* Utility to hide elements if needed by themes */
+.oss-hidden {
+	display: none !important;
+}
