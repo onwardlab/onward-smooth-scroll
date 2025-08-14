@@ -1,12 +1,12 @@
 /* Onward Smooth Scrolling - Admin styles */
 
-#oss-tabs { margin-top: 20px; }
-#oss-tabs .nav-tab { cursor: pointer; }
+.oss-form .form-table th { width: 260px; }
+.oss-form .form-table input[type="text"],
+.oss-form .form-table input[type="number"],
+.oss-form .form-table select,
+.oss-form .form-table textarea { max-width: 520px; width: 100%; }
 
-.oss-tab-content { display: none; }
-.oss-tab-content.active { display: block; }
-
-.oss-library-options { display: none; margin-top: 12px; }
+.oss-library-options { display: none; margin-top: 16px; }
 .oss-library-options.active { display: block; }
 
-.oss-library-options h2 { margin-top: 0; }
+.oss-subheading { font-weight: 600; }

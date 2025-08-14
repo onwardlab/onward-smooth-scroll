@@ -12,8 +12,7 @@
 	// Provide a safe default API in case wrapper is missing.
 	var DefaultAPI = {
 		init: function (cfg) {
-			// Enable CSS smooth scroll via class toggle.
-			document.documentElement.classList.add('oss-native-smooth');
+			// No-op; relies on browser smooth behavior or library if present.
 		},
 		scrollTo: function (targetOrY, options) {
 			var offset = options && typeof options.offset === 'number' ? options.offset : 0;
@@ -35,10 +34,11 @@
 		var target = document.getElementById(decodeURIComponent(id)) || document.querySelector(href);
 		if (!target) { return; }
 		event.preventDefault();
+		var offset = (settings.general && typeof settings.general.anchorOffset === 'number') ? settings.general.anchorOffset : 0;
 		try {
-			API.scrollTo(target, { offset: Number(settings.anchorOffset) || 0, easing: settings.easing });
+			API.scrollTo(target, { offset: offset });
 		} catch (e) {
-			DefaultAPI.scrollTo(target, { offset: Number(settings.anchorOffset) || 0, easing: settings.easing });
+			DefaultAPI.scrollTo(target, { offset: offset });
 		}
 	}
 
@@ -66,7 +66,8 @@
 			var target = document.getElementById(window.location.hash.substring(1));
 			if (target) {
 				setTimeout(function () {
-					API.scrollTo(target, { offset: Number(settings.anchorOffset) || 0 });
+					var offset = (settings.general && typeof settings.general.anchorOffset === 'number') ? settings.general.anchorOffset : 0;
+					API.scrollTo(target, { offset: offset });
 				}, 0);
 			}
 		}

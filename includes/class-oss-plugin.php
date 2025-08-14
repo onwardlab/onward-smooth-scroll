@@ -76,12 +76,87 @@ class Plugin {
 	 */
 	public static function get_default_options(): array {
 		$defaults = array(
-			'active_library'  => 'native',
-			'scroll_speed'    => 1.0,
-			'easing'          => 'ease',
+			'active_library'  => 'lenis',
 			'anchor_offset'   => 0,
 			'enable_mobile'   => 1,
 			'script_location' => 'footer',
+			'locomotive'      => array(
+				// Target container selector. We pass this to the wrapper to resolve an element for `el`.
+				'elSelector'           => 'body',
+				'smooth'               => true,
+				'smoothMobile'         => true,
+				'lerp'                 => 0.1,
+				'multiplier'           => 1,
+				'firefoxMultiplier'    => 1,
+				'touchMultiplier'      => 2,
+				'direction'            => 'vertical',
+				'gestureDirection'     => 'vertical',
+				'class'                => 'is-inview',
+				'scrollbarClass'       => 'c-scrollbar',
+				'scrollingClass'       => 'has-scroll-scrolling',
+				'draggingClass'        => 'has-scroll-dragging',
+				'smoothClass'          => 'has-smooth',
+				'initClass'            => 'has-scroll-init',
+				'getDirection'         => true,
+				'scrollFromAnywhere'   => true,
+				'reloadOnContextChange'=> false,
+				'resetNativeScroll'    => false,
+				'tablet'               => array(
+					'smooth'            => true,
+					'breakpoint'        => 1024,
+					'direction'         => 'vertical',
+					'gestureDirection'  => 'vertical',
+					'multiplier'        => 1,
+					'firefoxMultiplier' => 1,
+				),
+				'smartphone'           => array(
+					'smooth'            => false,
+					'breakpoint'        => 768,
+					'direction'         => 'vertical',
+					'gestureDirection'  => 'vertical',
+					'multiplier'        => 1,
+					'firefoxMultiplier' => 1,
+				),
+				'custom'               => '', // JSON-encoded object for advanced options
+			),
+			'lenis'           => array(
+				'duration'           => 1.2,
+				'easing'             => 'cubic-bezier(0.22, 1, 0.36, 1)',
+				'lerp'               => 0.1,
+				'smoothWheel'        => true,
+				'smoothTouch'        => false,
+				'wheelMultiplier'    => 1.0,
+				'touchMultiplier'    => 1.5,
+				'infinite'           => false,
+				'autoResize'         => true,
+				'normalizeWheel'     => true,
+				'orientation'        => 'vertical',
+				'gestureOrientation' => 'vertical',
+				'syncTouch'          => false,
+				'wrapperSelector'    => '',
+				'contentSelector'    => '',
+				'custom'             => '', // JSON-encoded object for advanced options
+			),
+			'gsap'            => array(
+				'enableScrollTo'        => true,
+				'duration'               => 1.0,
+				'ease'                   => 'power2.out',
+				'autoKill'              => true,
+				'overwrite'             => true,
+				'offset'                => 0,
+				'scrollTriggerDefaults' => array(
+					'scrub'           => false,
+					'markers'         => false,
+					'pin'             => false,
+					'toggleActions'   => 'play pause resume reset',
+					'anticipatePin'   => 0,
+					'fastScrollEnd'   => true,
+					'preventOverlaps' => false,
+					'once'            => false,
+					'horizontal'      => false,
+				),
+				'triggersJSON'          => '', // JSON array of ScrollTrigger configs
+			),
 		);
 
 		/**
@@ -93,6 +168,24 @@ class Plugin {
 	}
 
 	/**
+	 * Deep merge two arrays (assoc). Scalar from $overrides wins.
+	 *
+	 * @param array $base Base array.
+	 * @param array $overrides Overrides array.
+	 * @return array
+	 */
+	private static function deep_merge( array $base, array $overrides ): array {
+		foreach ( $overrides as $key => $value ) {
+			if ( is_array( $value ) && isset( $base[ $key ] ) && is_array( $base[ $key ] ) ) {
+				$base[ $key ] = self::deep_merge( $base[ $key ], $value );
+			} else {
+				$base[ $key ] = $value;
+			}
+		}
+		return $base;
+	}
+
+	/**
 	 * Retrieve saved options merged with defaults.
 	 *
 	 * @return array<string, mixed>
@@ -100,12 +193,10 @@ class Plugin {
 	public static function get_options(): array {
 		$saved    = get_option( 'oss_options', array() );
 		$defaults = self::get_default_options();
-		$options  = wp_parse_args( is_array( $saved ) ? $saved : array(), $defaults );
+		$options  = is_array( $saved ) ? self::deep_merge( $defaults, $saved ) : $defaults;
 
-		// Defensive type enforcement.
-		$options['active_library']  = in_array( $options['active_library'], array( 'locomotive', 'lenis', 'scrollbar', 'native' ), true ) ? $options['active_library'] : 'native';
-		$options['scroll_speed']    = is_numeric( $options['scroll_speed'] ) ? (float) $options['scroll_speed'] : (float) $defaults['scroll_speed'];
-		$options['easing']          = in_array( $options['easing'], array( 'ease', 'linear', 'ease-in', 'ease-out', 'cubic-bezier' ), true ) ? $options['easing'] : $defaults['easing'];
+		// Defensive type enforcement for top-level settings.
+		$options['active_library']  = in_array( $options['active_library'], array( 'locomotive', 'gsap', 'lenis' ), true ) ? $options['active_library'] : 'lenis';
 		$options['anchor_offset']   = is_numeric( $options['anchor_offset'] ) ? (int) $options['anchor_offset'] : (int) $defaults['anchor_offset'];
 		$options['enable_mobile']   = (int) ( ! empty( $options['enable_mobile'] ) ? 1 : 0 );
 		$options['script_location'] = in_array( $options['script_location'], array( 'header', 'footer' ), true ) ? $options['script_location'] : $defaults['script_location'];
@@ -121,11 +212,11 @@ class Plugin {
 	/**
 	 * Get the active library, after applying filters.
 	 *
-	 * @return string One of: locomotive|lenis|scrollbar|native
+	 * @return string One of: locomotive|gsap|lenis
 	 */
 	public static function get_active_library(): string {
 		$options = self::get_options();
-		$active  = $options['active_library'] ?? 'native';
+		$active  = $options['active_library'] ?? 'lenis';
 
 		/**
 		 * Filter the active library.
