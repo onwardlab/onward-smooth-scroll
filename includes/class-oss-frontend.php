@@ -52,8 +52,9 @@ class Frontend {
 		);
 
 		// Determine library asset paths.
-		$lib_js  = $this->map_library_to_js( $active_library );
-		$lib_css = $this->map_library_to_css( $active_library );
+		$lib_js        = $this->map_library_to_js( $active_library );
+		$lib_css       = $this->map_library_to_css( $active_library );
+		$vendor_handles = array();
 
 		// Register library CSS if present.
 		if ( $lib_css && file_exists( OSS_PLUGIN_DIR . $lib_css ) ) {
@@ -65,12 +66,42 @@ class Frontend {
 			);
 		}
 
+		// Enqueue local vendor files based on library selection.
+		switch ( $active_library ) {
+			case 'locomotive':
+				$vendor_path = 'libraries/locomotive.min.js';
+				if ( file_exists( OSS_PLUGIN_DIR . $vendor_path ) ) {
+					wp_register_script( 'oss-vendor-locomotive', OSS_PLUGIN_URL . $vendor_path, array(), OSS_VERSION, $in_footer );
+					$vendor_handles[] = 'oss-vendor-locomotive';
+				}
+				break;
+			case 'lenis':
+				$vendor_path = 'libraries/lenis.min.js';
+				if ( file_exists( OSS_PLUGIN_DIR . $vendor_path ) ) {
+					wp_register_script( 'oss-vendor-lenis', OSS_PLUGIN_URL . $vendor_path, array(), OSS_VERSION, $in_footer );
+					$vendor_handles[] = 'oss-vendor-lenis';
+				}
+				break;
+			case 'gsap':
+				$gsap_core = 'libraries/gsap.min.js';
+				$st_plugin = 'libraries/ScrollTrigger.min.js';
+				if ( file_exists( OSS_PLUGIN_DIR . $gsap_core ) ) {
+					wp_register_script( 'oss-vendor-gsap', OSS_PLUGIN_URL . $gsap_core, array(), OSS_VERSION, $in_footer );
+					$vendor_handles[] = 'oss-vendor-gsap';
+				}
+				if ( file_exists( OSS_PLUGIN_DIR . $st_plugin ) ) {
+					wp_register_script( 'oss-vendor-gsap-st', OSS_PLUGIN_URL . $st_plugin, array( 'oss-vendor-gsap' ), OSS_VERSION, $in_footer );
+					$vendor_handles[] = 'oss-vendor-gsap-st';
+				}
+				break;
+		}
+
 		// Register and enqueue the library wrapper script if it exists.
 		if ( file_exists( OSS_PLUGIN_DIR . $lib_js ) ) {
 			wp_register_script(
 				'oss-library',
 				OSS_PLUGIN_URL . $lib_js,
-				array(),
+				$vendor_handles,
 				OSS_VERSION,
 				$in_footer
 			);
@@ -81,7 +112,7 @@ class Frontend {
 		wp_register_script(
 			'oss-init',
 			OSS_PLUGIN_URL . 'assets/js/oss-init.js',
-			array(),
+			array( 'oss-library' ),
 			OSS_VERSION,
 			$in_footer
 		);

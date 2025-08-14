@@ -6,6 +6,8 @@
 .oss-form .form-table select,
 .oss-form .form-table textarea { max-width: 520px; width: 100%; }
 
+.oss-form .description { color: #555; font-size: 12px; margin-top: 6px; }
+
 .oss-library-options { display: none; margin-top: 16px; }
 .oss-library-options.active { display: block; }
 
