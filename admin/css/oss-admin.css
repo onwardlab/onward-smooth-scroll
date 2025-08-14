@@ -1,0 +1,12 @@
+/* Onward Smooth Scrolling - Admin styles */
+
+#oss-tabs { margin-top: 20px; }
+#oss-tabs .nav-tab { cursor: pointer; }
+
+.oss-tab-content { display: none; }
+.oss-tab-content.active { display: block; }
+
+.oss-library-options { display: none; margin-top: 12px; }
+.oss-library-options.active { display: block; }
+
+.oss-library-options h2 { margin-top: 0; }
